@@ -3,10 +3,28 @@ volumes:
   volume-certs:
   volume-vhost:
   volume-html:
+  gitlab-config:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/srv/gitlab/config'
+  gitlab-logs:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/srv/gitlab/logs'
+  gitlab-data:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/srv/gitlab/data'
+
 
 services: 
   nginx-proxy:
-        #name: 'nginx-proxy'
     image: 'jwilder/nginx-proxy'
     restart: always
     ports: 
@@ -21,7 +39,6 @@ services:
       - 'com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy'
 
   nginx-proxy-letsencrypt:
-        #  name: 'nginx-proxy-letsencrypt'
     image: 'jrcs/letsencrypt-nginx-proxy-companion'
     depends_on: 
       - 'nginx-proxy'
@@ -32,18 +49,6 @@ services:
       - volume-vhost:/etc/nginx/vhost.d
       - volume-html:/usr/share/nginx/html
 
-  nginx:
-    image: 'nginx'        
-    depends_on: 
-      - 'nginx-proxy-letsencrypt'
-    expose:
-      - 80
-    restart: always
-    environment: 
-      - VIRTUAL_HOST=nginx.renz.cloud
-      - LETSENCRYPT_HOST=nginx.renz.cloud
-      - LETSENCRYPT_EMAIL=crypto@renz.cloud
-  
   gitlab:
     image: 'gitlab/gitlab-ce:latest'
     restart: always
@@ -53,17 +58,16 @@ services:
     environment: 
       GITLAB_OMNIBUS_CONFIG: |
         external_url 'https://gitlab.renz.cloud'
+       # Add any other gitlab.rb configuration here, each on its own line
     environment:
       - VIRTUAL_HOST=gitlab.renz.cloud
       - LETSENCRYPT_HOST=gitlab.renz.cloud
       - LETSENCRYPT_EMAIL=crypto@renz.cloud
-        #iGITLAB_OMNIBUS_CONFIG: |
-  #    # Add any other gitlab.rb configuration here, each on its own lin
     expose:
       - '80'
-  #  - '443'
+  #  - '443' # not needed, nginx-proxy talks to this container without SSL on port 80
   #  - '22'
     volumes:
-      - '/srv/gitlab/config:/etc/gitlab'
-      - '/srv/gitlab/logs:/var/log/gitlab'
-      - '/srv/gitlab/data:/var/opt/gitlab'
+      - gitlab-config:/etc/gitlab
+      - gitlab-logs:/var/log/gitlab
+      - gitlab-data:/var/opt/gitlab
