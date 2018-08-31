@@ -88,6 +88,18 @@ services:
         external_url 'https://gitlab.renz.cloud'
         nginx['listen_port'] = 80
         nginx['listen_https'] = false
+        gitlab_rails['smtp_enable'] = true
+        gitlab_rails['smtp_address'] = "smtp.strato.de"
+        gitlab_rails['smtp_port'] = 465
+        gitlab_rails['smtp_user_name'] = "gitlab@renz.cloud"
+        gitlab_rails['smtp_password'] = ${GITLAB_STRATO_SMTP_PW}
+        gitlab_rails['smtp_domain'] = "renz.cloud"
+        gitlab_rails['smtp_authentication'] = "login"
+        gitlab_rails['smtp_enable_starttls_auto'] = true
+        gitlab_rails['smtp_tls'] = true
+        gitlab_rails['smtp_openssl_verify_mode'] = 'none'
+        gitlab_rails['gitlab_email_from'] = 'gitlab@renz.cloud'
+        gitlab_rails['gitlab_email_reply_to'] = 'gitlab@renz.cloud'
        # Add any other gitlab.rb configuration here, each on its own line
     #environment:
       
@@ -112,6 +124,7 @@ services:
       - VOLUMERIZE_CONTAINERS=nginx-proxy nginx-proxy-letsencrypt gitlab
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - volumerize-backup:/backup
       - nginx-certs:/source/nginx-certs:ro
       - nginx-vhost:/source/nginx-vhost:ro
       - nginx-html:/source/nginx-certs:ro
