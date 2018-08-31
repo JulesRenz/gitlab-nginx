@@ -109,7 +109,9 @@ services:
     environment:
       - VOLUMERIZE_SOURCE=/source
       - VOLUMERIZE_TARGET=file:///backup
+      - VOLUMERIZE_CONTAINERS=nginx-proxy nginx-proxy-letsencrypt gitlab
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - nginx-certs:/source/nginx-certs:ro
       - nginx-vhost:/source/nginx-vhost:ro
       - nginx-html:/source/nginx-certs:ro
