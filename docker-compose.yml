@@ -47,6 +47,7 @@ volumes:
 
 services: 
   nginx-proxy:
+    container_name: nginx-proxy
     image: 'jwilder/nginx-proxy'
     #restart: no
     ports: 
@@ -61,6 +62,7 @@ services:
       - 'com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy'
 
   nginx-proxy-letsencrypt:
+    container_name: nginx-proxy-letsencrypt
     image: 'jrcs/letsencrypt-nginx-proxy-companion'
     depends_on: 
       - 'nginx-proxy'
@@ -72,6 +74,7 @@ services:
       - nginx-html:/usr/share/nginx/html
 
   gitlab:
+    container_name: gitlab
     image: 'gitlab/gitlab-ce:latest'
     #restart: no
     depends_on:
@@ -98,6 +101,7 @@ services:
       - gitlab-data:/var/opt/gitlab
 
   volumerize:
+    container_name: volumerize
     image: 'blacklabelops/volumerize'
     #restart: no #needed for backup
     depends_on:
