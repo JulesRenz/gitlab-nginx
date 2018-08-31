@@ -1,40 +1,62 @@
 version: '3'
 volumes:
-  volume-certs:
-  volume-vhost:
-  volume-html:
+  nginx-certs:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/srv/gitlab-nginx/nginx/certs'
+  nginx-vhost:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/srv/gitlab-nginx/nginx/vhost'
+  nginx-html:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/srv/gitlab-nginx/nginx/html'
   gitlab-config:
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/srv/gitlab/config'
+      device: '/srv/gitlab-nginx/gitlab/config'
   gitlab-logs:
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/srv/gitlab/logs'
+      device: '/srv/gitlab-nginx/gitlab/logs'
   gitlab-data:
     driver: local
     driver_opts:
       type: 'none'
       o: 'bind'
-      device: '/srv/gitlab/data'
+      device: '/srv/gitlab-nginx/gitlab/data'
+  volumerize-backup:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: '/srv/gitlab-nginx/volumerize/backup'
+  volumerize-cache:
 
 
 services: 
   nginx-proxy:
     image: 'jwilder/nginx-proxy'
-    restart: always
+    #restart: no
     ports: 
       - "80:80"
       - "443:443"
     volumes:
       - /var/run/docker.sock:/tmp/docker.sock:ro
-      - volume-certs:/etc/nginx/certs:ro
-      - volume-vhost:/etc/nginx/vhost.d
-      - volume-html:/usr/share/nginx/html
+      - nginx-certs:/etc/nginx/certs:ro
+      - nginx-vhost:/etc/nginx/vhost.d
+      - nginx-html:/usr/share/nginx/html
     labels:
       - 'com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy'
 
@@ -42,16 +64,16 @@ services:
     image: 'jrcs/letsencrypt-nginx-proxy-companion'
     depends_on: 
       - 'nginx-proxy'
-    restart: always
+    #restart: no
     volumes: 
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - volume-certs:/etc/nginx/certs
-      - volume-vhost:/etc/nginx/vhost.d
-      - volume-html:/usr/share/nginx/html
+      - nginx-certs:/etc/nginx/certs
+      - nginx-vhost:/etc/nginx/vhost.d
+      - nginx-html:/usr/share/nginx/html
 
   gitlab:
     image: 'gitlab/gitlab-ce:latest'
-    restart: always
+    #restart: no
     depends_on:
       - 'nginx-proxy-letsencrypt'
     hostname: 'gitlab.renz.cloud'
@@ -71,3 +93,19 @@ services:
       - gitlab-config:/etc/gitlab
       - gitlab-logs:/var/log/gitlab
       - gitlab-data:/var/opt/gitlab
+
+  volumerize:
+    image: 'blacklabelops/volumerize'
+    #restart: no #needed for backup
+    depends_on:
+      - 'gitlab'
+    environment:
+      - VOLUMERIZE_SOURCE=/source
+      - VOLUMERIZE_TARGET=file:///backup
+    volumes:
+      - nginx-certs:/source/nginx-certs:ro
+      - nginx-vhost:/source/nginx-vhost:ro
+      - nginx-html:/source/nginx-certs:ro
+      - gitlab-config:/source/gitlab-config:ro
+      - gitlab-logs:/source/gitlab-logs:ro
+      - gitlab-data:/source/gitlab-data:ro
