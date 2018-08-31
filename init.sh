@@ -1,4 +1,7 @@
 #!/bin/bash
+
+
+sudo mkdir /srv/gitlab-nginx/
 sudo mkdir /srv/gitlab-nginx/gitlab
 sudo mkdir /srv/gitlab-nginx/gitlab/config
 sudo mkdir /srv/gitlab-nginx/gitlab/data
